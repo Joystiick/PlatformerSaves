@@ -23,7 +23,7 @@ $geodePackage = Get-ChildItem "c:\Users\lachi\Downloads\Platformer Saver\build" 
 if ($geodePackage) {
     Write-Host "`nBuilt mod: $($geodePackage.FullName)" -ForegroundColor Green
 } else {
-    Write-Host "`nBuilt mod: NOT FOUND — run 'geode build' first (requires VS 2022 C++ Build Tools)" -ForegroundColor Yellow
+    Write-Host "`nBuilt mod: NOT FOUND - run 'geode build' first (requires VS 2022 C++ Build Tools)" -ForegroundColor Yellow
 }
 
 Write-Host "`nNext: install deps in-game, then follow TESTING.md"
