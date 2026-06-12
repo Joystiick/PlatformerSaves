@@ -2,6 +2,8 @@
 
 Geode mod for Geometry Dash 2.2074 (Windows) — checkpoint save history for platformer levels.
 
+Repository: https://github.com/Joystiick/PlatformerSaves
+
 ## Requirements
 
 - [Geode](https://geode-sdk.org/) installed in GD 2.2074
@@ -9,16 +11,19 @@ Geode mod for Geometry Dash 2.2074 (Windows) — checkpoint save history for pla
 
 ## Build
 
-1. Install [Geode CLI](https://docs.geode-sdk.org/getting-started/) and run `geode sdk install`
-2. Set `GEODE_SDK` environment variable (CLI does this automatically)
-3. Install Visual Studio 2022 with C++ desktop workload
-4. From this folder:
+1. Install [Geode CLI](https://docs.geode-sdk.org/getting-started/) (`winget install GeodeSDK.GeodeCLI`) and run `geode sdk install`
+2. Add a profile: `geode profile add --name default "C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash"`
+3. Install **Visual Studio 2022 Build Tools** with the **Desktop development with C++** workload (required for `cl.exe`)
+4. Install **CMake** (`winget install Kitware.CMake`) if not already on PATH
+5. From this folder:
 
 ```powershell
 geode build
 ```
 
 The `.geode` package appears in `build/` (or installs automatically if a CLI profile is configured).
+
+CI builds on every push to `master` (Windows-only workflow). See [PLAYTEST.md](PLAYTEST.md) and [GEODE_INDEX.md](GEODE_INDEX.md).
 
 ## Controls
 
