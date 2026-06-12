@@ -4,6 +4,21 @@
 
 using namespace geode::prelude;
 
+namespace {
+    matjson::Value makeEmptyHistory() {
+        return matjson::makeObject({
+            {"entries", matjson::Value(std::vector<matjson::Value>{})}
+        });
+    }
+
+    std::vector<matjson::Value> getEntriesArray(matjson::Value& history) {
+        if (auto result = history["entries"].asArray()) {
+            return result.unwrap();
+        }
+        return {};
+    }
+}
+
 SaveHistoryManager& SaveHistoryManager::get() {
     static SaveHistoryManager instance;
     return instance;
@@ -39,7 +54,7 @@ matjson::Value SaveHistoryManager::entryToJson(const SaveHistoryEntry& entry) co
 bool SaveHistoryManager::loadHistory(GJGameLevel* level, matjson::Value& outHistory) {
     auto const path = util::filesystem::getHistoryFilePath(level);
     if (!std::filesystem::exists(path)) {
-        outHistory = matjson::makeObject({{"entries", matjson::Value(matjson::Type::Array)}});
+        outHistory = makeEmptyHistory();
         return true;
     }
 
@@ -51,13 +66,13 @@ bool SaveHistoryManager::loadHistory(GJGameLevel* level, matjson::Value& outHist
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     auto parsed = matjson::parse(content);
     if (!parsed) {
-        outHistory = matjson::makeObject({{"entries", matjson::Value(matjson::Type::Array)}});
+        outHistory = makeEmptyHistory();
         return true;
     }
 
     outHistory = parsed.unwrap();
     if (!outHistory.contains("entries") || !outHistory["entries"].isArray()) {
-        outHistory["entries"] = matjson::Value(matjson::Type::Array);
+        outHistory["entries"] = matjson::Value(std::vector<matjson::Value>{});
     }
     return true;
 }
@@ -85,7 +100,7 @@ std::vector<SaveHistoryEntry> SaveHistoryManager::getEntries(GJGameLevel* level)
     }
 
     std::vector<SaveHistoryEntry> entries;
-    for (auto const& value : history["entries"].asArray().unwrapOr(std::vector<matjson::Value>{})) {
+    for (auto const& value : getEntriesArray(history)) {
         entries.push_back(entryFromJson(value));
     }
     return entries;
@@ -116,7 +131,7 @@ bool SaveHistoryManager::appendEntry(GJGameLevel* level, int slot, SaveReason re
         return false;
     }
 
-    auto entries = history["entries"].asArray().unwrapOr(std::vector<matjson::Value>{});
+    auto entries = getEntriesArray(history);
     entries.push_back(entryToJson({
         .slot = slot,
         .timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -141,8 +156,8 @@ bool SaveHistoryManager::truncateAfterIndex(GJGameLevel* level, size_t oldestFir
 
     entries.resize(oldestFirstIndex + 1);
 
-    matjson::Value history = matjson::makeObject({{"entries", matjson::Value(matjson::Type::Array)}});
-    auto jsonEntries = history["entries"].asArray().unwrapOr(std::vector<matjson::Value>{});
+    matjson::Value history = makeEmptyHistory();
+    std::vector<matjson::Value> jsonEntries;
     for (auto const& entry : entries) {
         jsonEntries.push_back(entryToJson(entry));
     }

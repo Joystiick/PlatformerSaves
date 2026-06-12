@@ -83,11 +83,11 @@ void SaveHistoryMenuPopup::buildList() {
         m_mainLayer->addChild(rowLabel);
     }
 
-    m_scrollView = CCScrollView::create({size.width - 20.f, size.height - 70.f}, true);
+    m_scrollView = CCScrollView::create({size.width - 20.f, size.height - 70.f}, m_listMenu);
+    m_scrollView->setDirection(kCCScrollViewDirectionVertical);
     m_scrollView->setPosition({10.f, 10.f});
     m_scrollView->setContentOffset({0.f, size.height - 70.f - contentHeight});
     m_scrollView->setContentSize({size.width - 20.f, contentHeight});
-    m_scrollView->addChild(m_listMenu);
     m_mainLayer->addChild(m_scrollView);
 }
 
@@ -111,7 +111,7 @@ void SaveHistoryMenuPopup::performLoad(size_t oldestFirstIndex) {
     }
 
     size_t newerCount = entries.size() - oldestFirstIndex - 1;
-    auto doLoad = [=]() {
+    auto doLoad = [this, playLayer, oldestFirstIndex]() {
         if (playLayer->loadFromHistoryIndex(oldestFirstIndex)) {
             onClose(nullptr);
         }
