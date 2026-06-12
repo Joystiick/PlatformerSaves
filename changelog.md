@@ -1,3 +1,7 @@
+## v1.0.2
+
+* Fix crash on level load (GD 2.2081): use `GameObject::resetMID()` instead of stale hardcoded memory offset
+
 ## v1.0.1
 
 * Fix Geode 5 `mod.json` format: `incompatibilities` object and dependency version strings (mod failed to load on 5.7.1)

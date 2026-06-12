@@ -119,7 +119,7 @@ void PSPlayLayer::loadGame() {
             }
 
             LevelInfoLayer* l_levelInfoLayer = static_cast<LevelInfoLayer*>(CCScene::get()->getChildByID("LevelInfoLayer"));
-            if (l_levelInfoLayer) {
+            if (l_levelInfoLayer && l_levelInfoLayer->m_progressTimer) {
                 l_levelInfoLayer->m_progressTimer->setColor(ccc3(220, 32, 64));
             }
 
@@ -401,7 +401,7 @@ void PSPlayLayer::loadGame() {
         case LoadingState::CancelLevelLoad: {
             m_fields->m_cancelLevelLoad = true;
             LevelInfoLayer* l_levelInfoLayer = static_cast<LevelInfoLayer*>(CCScene::get()->getChildByID("LevelInfoLayer"));
-            if (l_levelInfoLayer) {
+            if (l_levelInfoLayer && l_levelInfoLayer->m_progressTimer) {
                 l_levelInfoLayer->m_progressTimer->setVisible(false);
             }
             m_fields->m_loadingState = LoadingState::Ready;

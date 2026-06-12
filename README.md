@@ -4,7 +4,7 @@ Geode mod for Geometry Dash 2.2081 (Windows) — checkpoint save history for pla
 
 Repository: https://github.com/Joystiick/PlatformerSaves
 
-**Download:** [v1.0.1 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.1)
+**Download:** [v1.0.2 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.2)
 
 ## Requirements
 
