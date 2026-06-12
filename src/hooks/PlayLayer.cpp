@@ -66,6 +66,10 @@ bool PSPlayLayer::init(GJGameLevel* i_level, bool i_useReplay, bool i_dontCreate
     setupSavingProgressCircleSprite();
     setupSavingSuccessSprite();
 
+    if (m_level && savesEnabled()) {
+        m_fields->m_activeBranchId = SaveHistoryManager::get().getActiveBranchId(m_level);
+    }
+
     return true;
 }
 

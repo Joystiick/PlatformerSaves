@@ -6,7 +6,7 @@ Repository: https://github.com/Joystiick/PlatformerSaves
 
 **Download:** [v1.5.0 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.5.0)
 
-Mac and Android builds are planned; this release targets **Windows** (GD 2.2081).
+**Issues:** https://github.com/Joystiick/PlatformerSaves/issues
 
 ## Requirements
 
@@ -37,15 +37,20 @@ CI builds on every push to `master` (Windows-only workflow). See [PLAYTEST.md](P
 
 - **K** — quick manual save (in platformer levels)
 - **L** — open save history menu
-- **Pause → Save / Load / Stats / Rewind** — save timeline and run stats
-- Optional rewind keybind in mod settings
+- **R** — rewind 1–3 history slots (configurable)
+- **Pause → Save / Load / Rewind / Stats**
 
 ## Save data
 
 Stored under Geode's mod save directory per level:
 
-- `history.json` — save timeline metadata
+- `history.json` — save timeline metadata (schema v2)
 - `slot{N}.psf` — full run snapshots
+- `exports/{levelId}/` — export/import packages
+
+## Platforms
+
+Windows is supported today. **Mac and Android ports are planned** but not included in v1.5.0.
 
 ## License
 

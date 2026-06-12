@@ -41,4 +41,4 @@ Fork of [PlatformerSaves](https://github.com/0x5abe/PlatformerSaves) by Sabe (us
 ## After approval
 
 1. Share the Geode index link in your README
-2. Monitor [GitHub Issues](https://github.com/Joystiick/PlatformerSaves/issues) for load/save edge cases
+2. Monitor [issue reports](https://github.com/Joystiick/PlatformerSaves/issues) for mid-level pause load edge cases

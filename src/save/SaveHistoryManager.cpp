@@ -115,7 +115,11 @@ bool SaveHistoryManager::loadHistory(GJGameLevel* level, matjson::Value& outHist
     if (!outHistory.contains("entries") || !outHistory["entries"].isArray()) {
         outHistory["entries"] = matjson::Value(std::vector<matjson::Value>{});
     }
+    int const schemaBefore = outHistory["schema"].asInt().unwrapOr(1);
     migrateHistory(outHistory);
+    if (schemaBefore < HISTORY_SCHEMA_VERSION) {
+        saveHistory(level, outHistory);
+    }
     return true;
 }
 
