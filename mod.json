@@ -8,7 +8,7 @@
 	"name": "Platformer Saver",
 	"developer": "wuppy",
 	"description": "Unlimited checkpoint save history for platformer levels — auto-save on every checkpoint, pause-menu timeline, and auto-continue from your latest save.",
-	"repository": "https://github.com/TheWuppyCreator/Platformer-Saver",
+	"repository": "https://github.com/Joystiick/PlatformerSaves",
 	"resources": {
 		"sprites": [
 			"resources/saveButton.png",
