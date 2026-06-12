@@ -1,5 +1,6 @@
 #include "Feedback.hpp"
 #include <Geode/binding/FMODAudioEngine.hpp>
+#include <Geode/cocos/cocoa/CCObject.h>
 #include <hooks/PauseLayer.hpp>
 #include <hooks/PlayLayer.hpp>
 #include <save/SaveHistoryManager.hpp>

@@ -1,8 +1,67 @@
 #include "SaveHistoryMenuPopup.hpp"
+#include <Geode/ui/TextInput.hpp>
+#include <functional>
 #include <hooks/PlayLayer.hpp>
 #include <util/SavePackageIO.hpp>
 
 using namespace geode::prelude;
+
+namespace {
+class RenameSavePopup : public Popup {
+    TextInput* m_input = nullptr;
+    GJGameLevel* m_level = nullptr;
+    size_t m_index = 0;
+    std::function<void()> m_onRenamed;
+
+public:
+    static RenameSavePopup* create(GJGameLevel* level, size_t index, std::function<void()> onRenamed) {
+        auto* ret = new RenameSavePopup();
+        if (ret && ret->init(level, index, std::move(onRenamed))) {
+            ret->autorelease();
+            return ret;
+        }
+        CC_SAFE_DELETE(ret);
+        return nullptr;
+    }
+
+    bool init(GJGameLevel* level, size_t index, std::function<void()> onRenamed) {
+        if (!Popup::init(300.f, 160.f)) {
+            return false;
+        }
+        m_level = level;
+        m_index = index;
+        m_onRenamed = std::move(onRenamed);
+        setTitle("Rename Save");
+
+        m_input = TextInput::create(240.f, "Save name", "bigFont.fnt");
+        m_input->setPosition({m_mainLayer->getContentWidth() / 2.f, m_mainLayer->getContentHeight() / 2.f + 10.f});
+        m_mainLayer->addChild(m_input);
+
+        auto* menu = CCMenu::create();
+        menu->setPosition({m_mainLayer->getContentWidth() / 2.f, 35.f});
+        auto* okBtn = ButtonSprite::create("OK", 60.f, true, "goldFont.fnt", "GJ_button_01.png", 0.f, 0.6f);
+        auto* okItem = CCMenuItemSpriteExtra::create(okBtn, this, menu_selector(RenameSavePopup::onOk));
+        menu->addChild(okItem);
+        m_mainLayer->addChild(menu);
+        return true;
+    }
+
+    void onOk(CCObject*) {
+        auto const name = m_input->getString();
+        if (!name.empty()) {
+            SaveHistoryManager::get().renameEntry(m_level, m_index, name);
+        }
+        onClose(nullptr);
+        if (m_onRenamed) {
+            m_onRenamed();
+        }
+    }
+
+    void onClose(CCObject* sender) override {
+        Popup::onClose(sender);
+    }
+};
+}
 
 SaveHistoryMenuPopup* SaveHistoryMenuPopup::create() {
     auto* ret = new SaveHistoryMenuPopup();
@@ -162,15 +221,10 @@ void SaveHistoryMenuPopup::onRenameEntry(CCObject* sender) {
         return;
     }
     size_t const index = reinterpret_cast<size_t>(item->getUserData());
-    auto* popup = TextInputPopup::create("Rename Save", "Enter a name", "OK", "Cancel");
-    popup->setTextHandler([this, playLayer, index](char const* text) {
-        if (text && text[0] != '\0') {
-            SaveHistoryManager::get().renameEntry(playLayer->m_level, index, text);
-            onClose(nullptr);
-            SaveHistoryMenuPopup::create()->show();
-        }
-    });
-    popup->show();
+    RenameSavePopup::create(playLayer->m_level, index, [this]() {
+        onClose(nullptr);
+        SaveHistoryMenuPopup::create()->show();
+    })->show();
 }
 
 void SaveHistoryMenuPopup::onExport(CCObject* sender) {
