@@ -8,6 +8,21 @@ using namespace persistenceAPI;
 using namespace util::platform;
 
 namespace {
+    constexpr float kPauseButtonHeight = 49.f;
+
+    cocos2d::CCSprite* createPauseButtonSprite(char const* resource) {
+        auto* sprite = CCSprite::create(resource);
+        if (!sprite) {
+            return nullptr;
+        }
+        auto const size = sprite->getContentSize();
+        if (size.height > 0.f) {
+            sprite->setScale(kPauseButtonHeight / size.height);
+        }
+        sprite->setContentSize({kPauseButtonHeight, kPauseButtonHeight});
+        return sprite;
+    }
+
     void setMenuSpriteEnabled(cocos2d::CCSprite* sprite, CCMenuItemSpriteExtra* button, bool enabled) {
         if (!sprite || !button) {
             return;
@@ -38,23 +53,23 @@ void PSPauseLayer::customSetup() {
         return;
     }
 
-    m_fields->m_saveCheckpointsSprite = CCSprite::create("saveButton.png"_spr);
-    m_fields->m_saveCheckpointsSprite->setScale(0.5f);
+    m_fields->m_saveCheckpointsSprite = createPauseButtonSprite("saveButton.png"_spr);
     m_fields->m_saveCheckpointsButton = CCMenuItemSpriteExtra::create(
         m_fields->m_saveCheckpointsSprite,
         this,
         menu_selector(PSPauseLayer::onSaveCheckpoints)
     );
     m_fields->m_saveCheckpointsButton->setID("save-button"_spr);
+    m_fields->m_saveCheckpointsButton->setContentSize({kPauseButtonHeight, kPauseButtonHeight});
 
-    m_fields->m_loadSaveSprite = CCSprite::create("loadButton.png"_spr);
-    m_fields->m_loadSaveSprite->setScale(0.5f);
+    m_fields->m_loadSaveSprite = createPauseButtonSprite("loadButton.png"_spr);
     m_fields->m_loadSaveButton = CCMenuItemSpriteExtra::create(
         m_fields->m_loadSaveSprite,
         this,
         menu_selector(PSPauseLayer::onLoadSave)
     );
     m_fields->m_loadSaveButton->setID("load-save-button"_spr);
+    m_fields->m_loadSaveButton->setContentSize({kPauseButtonHeight, kPauseButtonHeight});
 
     setSaveButtonEnabled(l_playLayer->canSave() && l_playLayer->m_fields->m_savingState == SavingState::Ready);
     setLoadButtonEnabled(l_playLayer->m_fields->m_savingState == SavingState::Ready);

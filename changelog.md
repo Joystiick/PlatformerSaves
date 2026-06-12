@@ -1,3 +1,8 @@
+## v1.0.4
+
+* Transparent save/load sprites from user assets (cropped, centered, sized for pause menu)
+* Fix pause-menu button alignment to match vanilla left-button-menu layout (49px height)
+
 ## v1.0.3
 
 * Fix platformer checkpoints not registering on GD 2.2081 (save buttons stayed greyed out)
