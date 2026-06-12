@@ -11,11 +11,15 @@ Repository: https://github.com/Joystiick/PlatformerSaves
 
 ## Build
 
+**Quick setup:** run `scripts\ready-status.ps1` to see what's missing.
+
 1. Install [Geode CLI](https://docs.geode-sdk.org/getting-started/) (`winget install GeodeSDK.GeodeCLI`) and run `geode sdk install`
 2. Add a profile: `geode profile add --name default "C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash"`
-3. Install **Visual Studio 2022 Build Tools** with the **Desktop development with C++** workload (required for `cl.exe`)
-4. Install **CMake** (`winget install Kitware.CMake`) if not already on PATH
-5. From this folder:
+3. Install dependencies: `geode project check` (from this folder)
+4. Install **Visual Studio 2022 Build Tools** with C++ — **right-click `scripts\install-vs-admin.bat` → Run as administrator**
+5. Build: `powershell -File scripts\setup-build.ps1`
+
+Or manually:
 
 ```powershell
 geode build
