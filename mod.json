@@ -28,13 +28,6 @@
 		"gameplay"
 	],
 	"dependencies": {
-		"geode.custom-keybinds": {
-			"version": ">=v1.6.0",
-			"platforms": [
-				"win"
-			],
-			"importance": "required"
-		},
 		"geode.node-ids": {
 			"version": ">=v1.12.0-beta.4",
 			"importance": "required"
@@ -80,6 +73,14 @@
 			"name": "Updated save file warning",
 			"description": "Show a warning when opening a save file that was updated from a previous Platformer Saver version.",
 			"type": "bool"
+		},
+		"save-game": {
+			"type": "keybind",
+			"name": "Save game",
+			"description": "Quick-save in platformer levels (Platformer Saver)",
+			"default": "K",
+			"category": "gameplay",
+			"migrate-from": "wuppy.platformer-saver/save-game"
 		}
 	},
 	"incompatibilities": [

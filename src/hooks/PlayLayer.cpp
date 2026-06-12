@@ -5,7 +5,8 @@
 #include "hooks/PauseLayer.hpp"
 #include "hooks/FMODAudioEngine.hpp"
 #if !defined(GEODE_IS_IOS)
-#include <geode.custom-keybinds/include/Keybinds.hpp>
+#include <Geode/loader/GameEvent.hpp>
+#include <Geode/loader/SettingV3.hpp>
 #endif
 #include <save/SaveHistoryManager.hpp>
 #include <save/SaveHistoryManager.hpp>
@@ -268,9 +269,10 @@ bool PSPlayLayer::validSaveExists() {
 
 #if !defined(GEODE_IS_IOS)
 void PSPlayLayer::setupKeybinds() {
-    addEventListener<keybinds::InvokeBindFilter>(
-        [this](keybinds::InvokeBindEvent* event) {
-            if (event->isDown() && startSaveGame(true)) {
+    this->addEventListener(
+        KeybindSettingPressedEventV3(Mod::get(), "save-game"),
+        [this](Keybind const& keybind, bool down, bool repeat, double timestamp) {
+            if (down && !repeat && startSaveGame(true)) {
                 PSPauseLayer* l_pauseLayer = static_cast<PSPauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
                 if (l_pauseLayer) {
                     if (l_pauseLayer->m_fields->m_saveCheckpointsSprite != nullptr) l_pauseLayer->m_fields->m_saveCheckpointsSprite->setColor({127,127,127});
@@ -279,8 +281,7 @@ void PSPlayLayer::setupKeybinds() {
                 }
             }
             return ListenerResult::Propagate;
-        },
-        "save-game"_spr
+        }
     );
 }
 #endif
