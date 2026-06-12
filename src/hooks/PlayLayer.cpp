@@ -266,15 +266,15 @@ void PSPlayLayer::destroyPlayer(PlayerObject* player, GameObject* object) {
     PlayLayer::destroyPlayer(player, object);
 }
 
-bool PSPlayLayer::isSpeedrunMode() const {
+bool PSPlayLayer::isSpeedrunMode() {
     return Mod::get()->getSettingValue<bool>("speedrun-mode");
 }
 
-std::string PSPlayLayer::getActiveBranchId() const {
+std::string PSPlayLayer::getActiveBranchId() {
     return m_fields->m_activeBranchId;
 }
 
-std::string PSPlayLayer::getSaveBranchId() const {
+std::string PSPlayLayer::getSaveBranchId() {
     if (isSpeedrunMode()) {
         return SaveHistoryManager::kSpeedrunBranch;
     }

@@ -155,9 +155,9 @@ public:
 
     // custom methods
 
-    bool isSpeedrunMode() const;
-    std::string getActiveBranchId() const;
-    std::string getSaveBranchId() const;
+    bool isSpeedrunMode();
+    std::string getActiveBranchId();
+    std::string getSaveBranchId();
     bool rewindOneCheckpoint();
 
     void registerCheckpointsAndActivatedCheckpoints();
