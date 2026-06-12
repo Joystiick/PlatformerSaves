@@ -1,5 +1,6 @@
 #include "Feedback.hpp"
 #include <Geode/binding/FMODAudioEngine.hpp>
+#include <Geode/binding/PauseLayer.hpp>
 #include <Geode/cocos/cocoa/CCObject.h>
 #include <hooks/PauseLayer.hpp>
 #include <hooks/PlayLayer.hpp>
@@ -15,7 +16,8 @@ PSPauseLayer* getOpenPauseLayer() {
     if (!scene) {
         return nullptr;
     }
-    return typeinfo_cast<PSPauseLayer*>(scene->getChildByID("PauseLayer"));
+    auto* pauseLayer = typeinfo_cast<PauseLayer*>(scene->getChildByID("PauseLayer"));
+    return pauseLayer ? static_cast<PSPauseLayer*>(pauseLayer) : nullptr;
 }
 
 void refreshPauseLayerUI(PSPlayLayer* playLayer) {
