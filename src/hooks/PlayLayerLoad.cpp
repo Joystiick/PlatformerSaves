@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <save/SaveHistoryManager.hpp>
 #include <ui/PlayLevelMenuPopup.hpp>
+#include <util/Feedback.hpp>
 #include <util/algorithm.hpp>
 #include <util/filesystem.hpp>
 #include <util/platform.hpp>
@@ -79,6 +80,14 @@ void PSPlayLayer::loadGame() {
             m_fields->m_loadingProgress = 0.0f;
 
             if (SaveHistoryManager::get().hasValidSave(m_level)) {
+                auto const entryBehavior = Mod::get()->getSettingValue<std::string>("entry-behavior");
+                if (entryBehavior == "ask") {
+                    m_fields->m_saveSlot = -1;
+                    m_fields->m_loadingState = LoadingState::WaitingForPlayLevelMenuPopup;
+                    showPlayLevelMenu();
+                    break;
+                }
+
                 auto const latest = SaveHistoryManager::get().getLatest(m_level);
                 m_fields->m_saveSlot = latest->slot;
                 m_fields->m_showContinueNotification = true;
@@ -549,20 +558,38 @@ bool PSPlayLayer::loadFromHistoryIndex(size_t oldestFirstIndex) {
     if (oldestFirstIndex >= entries.size()) {
         return false;
     }
-
-    if (!SaveHistoryManager::get().truncateAfterIndex(m_level, oldestFirstIndex)) {
+    if (isSpeedrunMode() && entries[oldestFirstIndex].branchId != SaveHistoryManager::SPEEDRUN_BRANCH) {
         return false;
     }
 
-    entries = SaveHistoryManager::get().getEntries(m_level);
-    if (entries.empty()) {
+    auto const loadBehavior = Mod::get()->getSettingValue<std::string>("load-behavior");
+    int loadSlot = entries[oldestFirstIndex].slot;
+
+    if (loadBehavior == "branch") {
+        std::string newBranchId;
+        if (!SaveHistoryManager::get().forkBranchOnLoad(m_level, oldestFirstIndex, loadSlot, newBranchId)) {
+            return false;
+        }
+        m_fields->m_activeBranchId = newBranchId;
+    } else if (!SaveHistoryManager::get().truncateAfterIndex(m_level, oldestFirstIndex)) {
         return false;
+    } else {
+        auto latest = SaveHistoryManager::get().getLatest(m_level);
+        if (!latest) {
+            return false;
+        }
+        loadSlot = latest->slot;
     }
 
-    bool const ok = loadSaveSlotSync(entries.back().slot);
+    bool const ok = loadSaveSlotSync(loadSlot);
 
-    if (ok && Mod::get()->getSettingValue<bool>("show-save-notifications")) {
-        Notification::create("Save loaded", NotificationIcon::Success, 1.5f)->show();
+    if (ok) {
+        if (loadBehavior == "branch") {
+            m_fields->m_activeBranchId = SaveHistoryManager::get().getActiveBranchId(m_level);
+        }
+        util::feedback::showLoadNotification();
+        util::feedback::playSaveSound(true);
+        util::feedback::refreshPauseLayerUI(this);
     }
     return ok;
 }

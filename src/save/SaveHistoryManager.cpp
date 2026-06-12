@@ -7,6 +7,8 @@ using namespace geode::prelude;
 namespace {
     matjson::Value makeEmptyHistory() {
         return matjson::makeObject({
+            {"schema", SaveHistoryManager::HISTORY_SCHEMA_VERSION},
+            {"activeBranch", std::string(SaveHistoryManager::DEFAULT_BRANCH)},
             {"entries", matjson::Value(std::vector<matjson::Value>{})}
         });
     }
@@ -32,6 +34,10 @@ std::string SaveHistoryManager::reasonToString(SaveReason reason) const {
     }
 }
 
+std::string SaveHistoryManager::reasonPrefix(SaveReason reason) const {
+    return reason == SaveReason::Manual ? "[M]" : "[C]";
+}
+
 SaveHistoryEntry SaveHistoryManager::entryFromJson(const matjson::Value& value) const {
     SaveHistoryEntry entry;
     entry.slot = value["slot"].asInt().unwrapOr(0);
@@ -39,6 +45,11 @@ SaveHistoryEntry SaveHistoryManager::entryFromJson(const matjson::Value& value) 
     auto const reason = value["reason"].asString().unwrapOr("checkpoint");
     entry.reason = reason == "manual" ? SaveReason::Manual : SaveReason::Checkpoint;
     entry.checkpointCount = value["checkpointCount"].asInt().unwrapOr(0);
+    entry.name = value["name"].asString().unwrapOr("");
+    entry.timePlayed = value["timePlayed"].asDouble().unwrapOr(0.0);
+    entry.attempts = value["attempts"].asInt().unwrapOr(0);
+    entry.deaths = value["deaths"].asInt().unwrapOr(0);
+    entry.branchId = value["branchId"].asString().unwrapOr(DEFAULT_BRANCH);
     return entry;
 }
 
@@ -47,8 +58,38 @@ matjson::Value SaveHistoryManager::entryToJson(const SaveHistoryEntry& entry) co
         {"slot", entry.slot},
         {"timestamp", entry.timestamp},
         {"reason", reasonToString(entry.reason)},
-        {"checkpointCount", entry.checkpointCount}
+        {"checkpointCount", entry.checkpointCount},
+        {"name", entry.name},
+        {"timePlayed", entry.timePlayed},
+        {"attempts", entry.attempts},
+        {"deaths", entry.deaths},
+        {"branchId", entry.branchId}
     });
+}
+
+void SaveHistoryManager::migrateHistory(matjson::Value& history) {
+    int schema = history["schema"].asInt().unwrapOr(1);
+    if (schema >= HISTORY_SCHEMA_VERSION) {
+        if (!history.contains("activeBranch")) {
+            history["activeBranch"] = DEFAULT_BRANCH;
+        }
+        return;
+    }
+
+    auto entries = getEntriesArray(history);
+    std::vector<matjson::Value> migrated;
+    for (auto const& value : entries) {
+        auto entry = entryFromJson(value);
+        if (entry.branchId.empty()) {
+            entry.branchId = DEFAULT_BRANCH;
+        }
+        migrated.push_back(entryToJson(entry));
+    }
+    history["entries"] = migrated;
+    history["schema"] = HISTORY_SCHEMA_VERSION;
+    if (!history.contains("activeBranch")) {
+        history["activeBranch"] = DEFAULT_BRANCH;
+    }
 }
 
 bool SaveHistoryManager::loadHistory(GJGameLevel* level, matjson::Value& outHistory) {
@@ -74,6 +115,7 @@ bool SaveHistoryManager::loadHistory(GJGameLevel* level, matjson::Value& outHist
     if (!outHistory.contains("entries") || !outHistory["entries"].isArray()) {
         outHistory["entries"] = matjson::Value(std::vector<matjson::Value>{});
     }
+    migrateHistory(outHistory);
     return true;
 }
 
@@ -93,21 +135,52 @@ bool SaveHistoryManager::saveHistory(GJGameLevel* level, const matjson::Value& h
     return true;
 }
 
+std::vector<SaveHistoryEntry> SaveHistoryManager::entriesFromHistory(matjson::Value const& history) const {
+    std::vector<SaveHistoryEntry> entries;
+    if (auto arr = history["entries"].asArray()) {
+        for (auto const& value : arr.unwrap()) {
+            entries.push_back(entryFromJson(value));
+        }
+    }
+    return entries;
+}
+
 std::vector<SaveHistoryEntry> SaveHistoryManager::getEntries(GJGameLevel* level) {
     matjson::Value history;
     if (!loadHistory(level, history)) {
         return {};
     }
+    return entriesFromHistory(history);
+}
 
-    std::vector<SaveHistoryEntry> entries;
-    for (auto const& value : getEntriesArray(history)) {
-        entries.push_back(entryFromJson(value));
+std::vector<SaveHistoryEntry> SaveHistoryManager::getEntries(GJGameLevel* level, bool speedrunOnly) {
+    if (!speedrunOnly) {
+        return getEntries(level);
     }
-    return entries;
+    return getEntriesForBranch(level, SPEEDRUN_BRANCH);
+}
+
+std::vector<SaveHistoryEntry> SaveHistoryManager::getEntriesForBranch(GJGameLevel* level, std::string const& branchId) {
+    auto entries = getEntries(level);
+    std::vector<SaveHistoryEntry> filtered;
+    for (auto const& entry : entries) {
+        if (entry.branchId == branchId) {
+            filtered.push_back(entry);
+        }
+    }
+    return filtered;
 }
 
 std::optional<SaveHistoryEntry> SaveHistoryManager::getLatest(GJGameLevel* level) {
     auto entries = getEntries(level);
+    if (entries.empty()) {
+        return std::nullopt;
+    }
+    return entries.back();
+}
+
+std::optional<SaveHistoryEntry> SaveHistoryManager::getLatestForBranch(GJGameLevel* level, std::string const& branchId) {
+    auto entries = getEntriesForBranch(level, branchId);
     if (entries.empty()) {
         return std::nullopt;
     }
@@ -125,7 +198,28 @@ int SaveHistoryManager::getNextSlot(GJGameLevel* level) {
     return maxSlot + 1;
 }
 
-bool SaveHistoryManager::appendEntry(GJGameLevel* level, int slot, SaveReason reason, int checkpointCount) {
+std::string SaveHistoryManager::getActiveBranch(GJGameLevel* level) {
+    matjson::Value history;
+    if (!loadHistory(level, history)) {
+        return DEFAULT_BRANCH;
+    }
+    return history["activeBranch"].asString().unwrapOr(DEFAULT_BRANCH);
+}
+
+std::string SaveHistoryManager::getActiveBranchId(GJGameLevel* level) {
+    return getActiveBranch(level);
+}
+
+bool SaveHistoryManager::setActiveBranch(GJGameLevel* level, std::string const& branchId) {
+    matjson::Value history;
+    if (!loadHistory(level, history)) {
+        return false;
+    }
+    history["activeBranch"] = branchId;
+    return saveHistory(level, history);
+}
+
+bool SaveHistoryManager::appendEntry(GJGameLevel* level, SaveHistoryAppendParams const& params) {
     matjson::Value history;
     if (!loadHistory(level, history)) {
         return false;
@@ -133,15 +227,49 @@ bool SaveHistoryManager::appendEntry(GJGameLevel* level, int slot, SaveReason re
 
     auto entries = getEntriesArray(history);
     entries.push_back(entryToJson({
-        .slot = slot,
+        .slot = params.slot,
         .timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()
         ).count(),
-        .reason = reason,
-        .checkpointCount = checkpointCount
+        .reason = params.reason,
+        .checkpointCount = params.checkpointCount,
+        .name = params.name,
+        .timePlayed = params.timePlayed,
+        .attempts = params.attempts,
+        .deaths = params.deaths,
+        .branchId = params.branchId.empty() ? getActiveBranch(level) : params.branchId
     }));
     history["entries"] = entries;
-    return saveHistory(level, history);
+    if (!saveHistory(level, history)) {
+        return false;
+    }
+    enforceHistoryCap(level);
+    return true;
+}
+
+void SaveHistoryManager::enforceHistoryCap(GJGameLevel* level) {
+    int cap = Mod::get()->getSettingValue<int64_t>("max-history-entries");
+    if (cap <= 0) {
+        return;
+    }
+
+    matjson::Value history;
+    if (!loadHistory(level, history)) {
+        return;
+    }
+
+    auto entries = entriesFromHistory(history);
+    while (static_cast<int>(entries.size()) > cap) {
+        util::filesystem::removeSaveFile(level, entries.front().slot);
+        entries.erase(entries.begin());
+    }
+
+    std::vector<matjson::Value> jsonEntries;
+    for (auto const& entry : entries) {
+        jsonEntries.push_back(entryToJson(entry));
+    }
+    history["entries"] = jsonEntries;
+    saveHistory(level, history);
 }
 
 bool SaveHistoryManager::truncateAfterIndex(GJGameLevel* level, size_t oldestFirstIndex) {
@@ -156,13 +284,94 @@ bool SaveHistoryManager::truncateAfterIndex(GJGameLevel* level, size_t oldestFir
 
     entries.resize(oldestFirstIndex + 1);
 
-    matjson::Value history = makeEmptyHistory();
+    matjson::Value history;
+    if (!loadHistory(level, history)) {
+        return false;
+    }
     std::vector<matjson::Value> jsonEntries;
     for (auto const& entry : entries) {
         jsonEntries.push_back(entryToJson(entry));
     }
     history["entries"] = jsonEntries;
     return saveHistory(level, history);
+}
+
+bool SaveHistoryManager::deleteEntry(GJGameLevel* level, size_t oldestFirstIndex) {
+    auto entries = getEntries(level);
+    if (oldestFirstIndex >= entries.size()) {
+        return false;
+    }
+
+    util::filesystem::removeSaveFile(level, entries[oldestFirstIndex].slot);
+    entries.erase(entries.begin() + static_cast<ptrdiff_t>(oldestFirstIndex));
+
+    matjson::Value history;
+    if (!loadHistory(level, history)) {
+        return false;
+    }
+    std::vector<matjson::Value> jsonEntries;
+    for (auto const& entry : entries) {
+        jsonEntries.push_back(entryToJson(entry));
+    }
+    history["entries"] = jsonEntries;
+    return saveHistory(level, history);
+}
+
+bool SaveHistoryManager::renameEntry(GJGameLevel* level, size_t oldestFirstIndex, std::string const& name) {
+    matjson::Value history;
+    if (!loadHistory(level, history)) {
+        return false;
+    }
+
+    auto entries = getEntriesArray(history);
+    if (oldestFirstIndex >= entries.size()) {
+        return false;
+    }
+
+    auto entry = entryFromJson(entries[oldestFirstIndex]);
+    entry.name = name;
+    entries[oldestFirstIndex] = entryToJson(entry);
+    history["entries"] = entries;
+    return saveHistory(level, history);
+}
+
+bool SaveHistoryManager::forkLoadAtIndex(GJGameLevel* level, size_t oldestFirstIndex, int& outSlot, std::string& outBranchId) {
+    auto entries = getEntries(level);
+    if (oldestFirstIndex >= entries.size()) {
+        return false;
+    }
+
+    auto const& source = entries[oldestFirstIndex];
+    auto const srcPath = util::filesystem::getSaveFilePath(level, source.slot, true);
+    if (srcPath.empty()) {
+        return false;
+    }
+
+    outSlot = getNextSlot(level);
+    auto const destPath = util::filesystem::getSaveFilePath(level, outSlot, false);
+    std::error_code ec;
+    std::filesystem::copy_file(srcPath, destPath, std::filesystem::copy_options::overwrite_existing, ec);
+    if (ec) {
+        return false;
+    }
+
+    outBranchId = fmt::format("fork-{}", outSlot);
+    setActiveBranch(level, outBranchId);
+
+    return appendEntry(level, {
+        .slot = outSlot,
+        .reason = source.reason,
+        .checkpointCount = source.checkpointCount,
+        .name = source.name.empty() ? fmt::format("Fork #{}", outSlot) : source.name,
+        .timePlayed = source.timePlayed,
+        .attempts = source.attempts,
+        .deaths = source.deaths,
+        .branchId = outBranchId
+    });
+}
+
+bool SaveHistoryManager::forkBranchOnLoad(GJGameLevel* level, size_t oldestFirstIndex, int& outSlot, std::string& outBranchId) {
+    return forkLoadAtIndex(level, oldestFirstIndex, outSlot, outBranchId);
 }
 
 bool SaveHistoryManager::hasValidSave(GJGameLevel* level) {
@@ -185,6 +394,9 @@ void SaveHistoryManager::removeAllSaves(GJGameLevel* level) {
 }
 
 std::string SaveHistoryManager::formatEntryLabel(const SaveHistoryEntry& entry, size_t displayNumber) const {
-    auto const reason = entry.reason == SaveReason::Manual ? "Manual save" : "Checkpoint";
-    return fmt::format("#{} — {} — {} checkpoint{}", displayNumber, reason, entry.checkpointCount, entry.checkpointCount == 1 ? "" : "s");
+    auto const prefix = reasonPrefix(entry.reason);
+    auto const namePart = entry.name.empty()
+        ? fmt::format("{} cp{}", prefix, entry.checkpointCount)
+        : fmt::format("{} {}", prefix, entry.name);
+    return fmt::format("#{} — {} — {} attempt{}", displayNumber, namePart, entry.attempts, entry.attempts == 1 ? "" : "s");
 }

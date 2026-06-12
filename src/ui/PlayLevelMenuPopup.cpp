@@ -3,6 +3,7 @@
 #include "Geode/cocos/CCDirector.h"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include <hooks/PlayLayer.hpp>
+#include <save/SaveHistoryManager.hpp>
 #include <util/platform.hpp>
 
 using namespace geode::prelude;
@@ -146,7 +147,9 @@ void PlayLevelMenuPopup::onNewGame(CCObject* sender) {
 void PlayLevelMenuPopup::onContinue(CCObject* sender) {
     PSPlayLayer* l_playLayer = static_cast<PSPlayLayer*>(PlayLayer::get());
     if (l_playLayer && l_playLayer->m_fields->m_loadingState == LoadingState::WaitingForPlayLevelMenuPopup) {
-        l_playLayer->m_fields->m_saveSlot = 0;
+        auto const latest = SaveHistoryManager::get().getLatest(l_playLayer->m_level);
+        l_playLayer->m_fields->m_saveSlot = latest ? latest->slot : 0;
+        l_playLayer->m_fields->m_showContinueNotification = true;
     }
 
     onRemove(nullptr);
@@ -162,7 +165,7 @@ void PlayLevelMenuPopup::onRemoveSave(CCObject* sender) {
                 if (i_btn2) {
                     PSPlayLayer* l_playLayer = static_cast<PSPlayLayer*>(PlayLayer::get());
                     if (l_playLayer) {
-                        l_playLayer->removeSaveFile(0);
+                        SaveHistoryManager::get().removeAllSaves(l_playLayer->m_level);
 
                         if (m_continueButtonSprite) {
                             m_continueButtonSprite->m_label->setColor({127,127,127});
@@ -202,6 +205,13 @@ void PlayLevelMenuPopup::onClose(CCObject* sender) {
 }
 
 void PlayLevelMenuPopup::onRemove(CCObject* sender) {
+    PSPlayLayer* l_playLayer = static_cast<PSPlayLayer*>(PlayLayer::get());
+    if (l_playLayer
+        && l_playLayer->m_fields->m_loadingState == LoadingState::WaitingForPlayLevelMenuPopup
+        && l_playLayer->m_fields->m_saveSlot != -1) {
+        l_playLayer->setupHasCompleted();
+    }
+
     hideAndLockCursor(true);
     removeFromParentAndCleanup(true);
 }

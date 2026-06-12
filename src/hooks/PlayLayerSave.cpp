@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <hooks/PauseLayer.hpp>
 #include <save/SaveHistoryManager.hpp>
+#include <util/Feedback.hpp>
 #include <util/algorithm.hpp>
 #include <util/filesystem.hpp>
 #include <util/platform.hpp>
@@ -12,6 +13,7 @@ using namespace util::platform;
 
 bool PSPlayLayer::startSaveGame(bool manual) {
     if (m_fields->m_savingState != SavingState::Ready || m_isPracticeMode) return false;
+    if (manual && isSpeedrunMode()) return false;
     if (!manual && !canSave()) return false;
 
     m_fields->m_manualSave = manual;
@@ -142,22 +144,22 @@ void PSPlayLayer::saveGame() {
             m_fields->m_stream.write((char*)&o_finishedSaving,sizeof(bool));
             endStream();
 
-            SaveHistoryManager::get().appendEntry(
-                m_level,
-                m_fields->m_saveSlot,
-                m_fields->m_pendingSaveReason,
-                static_cast<int>(m_fields->m_normalModeCheckpoints->count())
-            );
+            SaveHistoryManager::get().appendEntry(m_level, {
+                .slot = m_fields->m_saveSlot,
+                .reason = m_fields->m_pendingSaveReason,
+                .checkpointCount = static_cast<int>(m_fields->m_normalModeCheckpoints->count()),
+                .timePlayed = m_timePlayed,
+                .attempts = m_attempts,
+                .deaths = m_fields->m_deathCount,
+                .branchId = getSaveBranchId()
+            });
 
             showSavingProgressCircleSprite(false);
             showSavingSuccessSprite();
 
-            if (Mod::get()->getSettingValue<bool>("show-save-notifications")) {
-                auto const message = m_fields->m_pendingSaveReason == SaveReason::Manual
-                    ? "Game saved"
-                    : "Checkpoint saved";
-                Notification::create(message, NotificationIcon::Success, 1.5f)->show();
-            }
+            util::feedback::showSaveNotification(m_fields->m_pendingSaveReason == SaveReason::Manual);
+            util::feedback::playSaveSound(false);
+            util::feedback::refreshPauseLayerUI(this);
 
             m_fields->m_manualSave = false;
 

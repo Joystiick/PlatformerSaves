@@ -4,7 +4,9 @@ Geode mod for Geometry Dash 2.2081 (Windows) — checkpoint save history for pla
 
 Repository: https://github.com/Joystiick/PlatformerSaves
 
-**Download:** [v1.0.4 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.4)
+**Download:** [v1.5.0 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.5.0)
+
+Mac and Android builds are planned; this release targets **Windows** (GD 2.2081).
 
 ## Requirements
 
@@ -34,8 +36,9 @@ CI builds on every push to `master` (Windows-only workflow). See [PLAYTEST.md](P
 ## Controls
 
 - **K** — quick manual save (in platformer levels)
-- **Pause → Save** — manual save (new history entry)
-- **Pause → Load** — open save timeline
+- **L** — open save history menu
+- **Pause → Save / Load / Stats / Rewind** — save timeline and run stats
+- Optional rewind keybind in mod settings
 
 ## Save data
 

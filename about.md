@@ -4,12 +4,20 @@ Save and load your progress in platformer levels — with **unlimited save histo
 
 ## Features
 
-- **Auto-save** on every platformer checkpoint
-- **Manual save** from the pause menu (adds a new history entry)
-- **Load Save** timeline in pause — pick any past save; loading an older save removes newer ones
-- **Auto-continue** from your latest save when entering a level
+- **Auto-save** on every platformer checkpoint (toggleable)
+- **Manual save** from the pause menu or **K** keybind
+- **Load Save** timeline (**L** keybind) — pick any past save; truncate or branch load
+- **Rewind** — jump back 1–3 history slots (**R** keybind or pause button)
+- **Run stats** popup — deaths, attempts, time, checkpoints
+- **Export / import** save packages per level
+- **Auto-continue** or **ask** on level entry
+- **Speedrun mode** — auto-save only, separate branch
 - Saves persist after completing a level
-- Full run state: checkpoints, items, timers, attempts
+- Full run state: checkpoints, items, timers, attempts, deaths
+
+## Report issues
+
+[GitHub Issues](https://github.com/Joystiick/PlatformerSaves/issues)
 
 ## Credits
 
@@ -21,4 +29,5 @@ Built by **wuppy** (TheWuppyCreator).
 
 - Normal platformer mode only (not practice)
 - Editor test-play levels are not supported
+- Windows first — Mac/Android ports planned
 - May conflict with macro/bot mods (e.g. xdBot)

@@ -4,9 +4,9 @@ Submit **Platformer Saver** (`wuppy.platformer-saver`) at [geode-sdk.org/mods](h
 
 ## Prerequisites
 
-- [x] Built `.geode` package — [v1.0.4 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.4)
+- [x] Built `.geode` package — [v1.5.0 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.5.0)
 - [ ] Manual testing passed ([TESTING.md](TESTING.md))
-- [x] GitHub release tagged `v1.0.4`
+- [x] GitHub release tagged `v1.5.0`
 
 ## Submission fields
 
@@ -14,15 +14,16 @@ Submit **Platformer Saver** (`wuppy.platformer-saver`) at [geode-sdk.org/mods](h
 |-------|--------|
 | **Mod ID** | `wuppy.platformer-saver` |
 | **Name** | Platformer Saver |
-| **Version** | v1.0.4 |
+| **Version** | v1.5.0 |
 | **Developer** | wuppy |
 | **Repository** | https://github.com/Joystiick/PlatformerSaves |
+| **Issues** | https://github.com/Joystiick/PlatformerSaves/issues |
 | **Tags** | enhancement, gameplay |
 | **Logo** | [logo.png](logo.png) (512×512) |
 | **Description** | Use [about.md](about.md) |
 | **GD version** | 2.2081 (Windows) |
 | **Geode version** | 5.7.1+ |
-| **Download URL** | https://github.com/Joystiick/PlatformerSaves/releases/download/v1.0.4/wuppy.platformer-saver.geode |
+| **Download URL** | https://github.com/Joystiick/PlatformerSaves/releases/download/v1.5.0/wuppy.platformer-saver.geode |
 
 ## Dependencies (required)
 
@@ -40,4 +41,4 @@ Fork of [PlatformerSaves](https://github.com/0x5abe/PlatformerSaves) by Sabe (us
 ## After approval
 
 1. Share the Geode index link in your README
-2. Monitor issue reports for mid-level pause load edge cases
+2. Monitor [GitHub Issues](https://github.com/Joystiick/PlatformerSaves/issues) for load/save edge cases

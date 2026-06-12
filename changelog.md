@@ -1,3 +1,17 @@
+## v1.5.0
+
+* Save history schema v2: names, stats, branches, cap, delete/rename
+* Split notifications: auto-save, manual save, continue
+* Pause UI: last-saved label, stats popup, rewind button, refresh on save
+* Load behavior: truncate (default) or branch fork
+* Entry behavior: auto-continue or ask (PlayLevelMenuPopup)
+* Speedrun mode: no manual save, separate branch filter
+* Keybinds: **L** load menu, **R** rewind (1–3 slots configurable)
+* Save/load sound effects setting
+* Export/import save packages from load menu
+* Auto-save toggle setting
+* 512×512 logo for Geode index; issues link in about
+
 ## v1.0.4
 
 * Transparent save/load sprites from user assets (cropped, centered, sized for pause menu)
@@ -27,14 +41,3 @@
 * New settings: save/continue notifications, confirm load truncate, history sort
 * Editor level saves removed; practice mode unsupported
 * Custom logo, save/load button art, and PUSAB font
-
-## v1.1.1
-
-* Fixed a bug that caused incorrect song to play when loading a save
-* Fixed a bug that caused a crash on mac when exiting a platformer level (thanks to hiimjasmine00)
-* Added an option to automatically start a new game if there isn't a save file for a particular level
-
-## v1.1.0
-
-* Fixed multiple bugs
-* Added a new save indicator

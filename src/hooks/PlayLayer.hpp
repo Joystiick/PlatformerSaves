@@ -105,6 +105,8 @@ public:
         gd::unordered_set<int> m_loadedPersistentTimerItemSet;
         bool m_manualSave = false;
         bool m_loadingFromPause = false;
+        int m_deathCount = 0;
+        std::string m_activeBranchId = "main";
     };
 
     // overrides
@@ -148,7 +150,15 @@ public:
     $override
     void updateVisibility(float i_unkFloat);
 
+    $override
+    void destroyPlayer(PlayerObject* player, GameObject* object);
+
     // custom methods
+
+    bool isSpeedrunMode() const;
+    std::string getActiveBranchId() const;
+    std::string getSaveBranchId() const;
+    bool rewindOneCheckpoint();
 
     void registerCheckpointsAndActivatedCheckpoints();
 
@@ -185,6 +195,10 @@ public:
     bool loadSaveSlotSync(int slot);
 
     bool loadFromHistoryIndex(size_t oldestFirstIndex);
+
+    bool canRewind();
+
+    void rewindFromHistory();
 
     void saveCheckpointToStream(unsigned int i_index);
 

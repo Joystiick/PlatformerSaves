@@ -10,7 +10,9 @@
 #include <Geode/loader/SettingV3.hpp>
 #endif
 #include <save/SaveHistoryManager.hpp>
-#include <save/SaveHistoryManager.hpp>
+#include <ui/PlayLevelMenuPopup.hpp>
+#include <ui/SaveHistoryMenuPopup.hpp>
+#include <util/Feedback.hpp>
 #include <util/algorithm.hpp>
 #include <util/filesystem.hpp>
 #include <util/platform.hpp>
@@ -49,6 +51,10 @@ bool PSPlayLayer::init(GJGameLevel* i_level, bool i_useReplay, bool i_dontCreate
     m_fields->m_normalModeCheckpoints = cocos2d::CCArray::create();
 
     if (!PlayLayer::init(i_level, i_useReplay, i_dontCreateObjects)) return false;
+
+    if (savesEnabled()) {
+        m_fields->m_activeBranchId = SaveHistoryManager::get().getActiveBranchId(m_level);
+    }
 
     // for processing objects asynchronously every time
     if (m_fields->m_signalForAsyncLoad) {
@@ -187,9 +193,11 @@ CheckpointObject* PSPlayLayer::markCheckpoint() {
     if (m_activatedCheckpoint != nullptr) {
         m_fields->m_activatedCheckpoints.push_back(CheckpointGameObjectReference(m_activatedCheckpoint));
     }
-    if (m_fields->m_savingState == SavingState::Ready) {
+    if (m_fields->m_savingState == SavingState::Ready && Mod::get()->getSettingValue<bool>("auto-save")) {
         startSaveGame(false);
     }
+
+    util::feedback::refreshPauseLayerUI(this);
 
     return l_checkpointObject;
 }
@@ -247,6 +255,67 @@ void PSPlayLayer::updateVisibility(float i_unkFloat) {
     }
 }
 
+void PSPlayLayer::destroyPlayer(PlayerObject* player, GameObject* object) {
+    if (savesEnabled() && m_isPlatformer && !m_isPracticeMode) {
+        m_fields->m_deathCount++;
+    }
+    PlayLayer::destroyPlayer(player, object);
+}
+
+bool PSPlayLayer::isSpeedrunMode() const {
+    return Mod::get()->getSettingValue<bool>("speedrun-mode");
+}
+
+std::string PSPlayLayer::getActiveBranchId() const {
+    return m_fields->m_activeBranchId;
+}
+
+std::string PSPlayLayer::getSaveBranchId() const {
+    if (isSpeedrunMode()) {
+        return SaveHistoryManager::kSpeedrunBranch;
+    }
+    return m_fields->m_activeBranchId;
+}
+
+bool PSPlayLayer::canRewind() {
+    if (m_fields->m_savingState != SavingState::Ready) {
+        return false;
+    }
+    auto const all = SaveHistoryManager::get().getEntries(m_level);
+    size_t filteredCount = 0;
+    for (auto const& entry : all) {
+        if (!isSpeedrunMode() || entry.branchId == SaveHistoryManager::SPEEDRUN_BRANCH) {
+            filteredCount++;
+        }
+    }
+    int const depth = static_cast<int>(Mod::get()->getSettingValue<int64_t>("rewind-depth"));
+    return static_cast<int>(filteredCount) > depth;
+}
+
+void PSPlayLayer::rewindFromHistory() {
+    if (!canRewind()) {
+        return;
+    }
+    auto const all = SaveHistoryManager::get().getEntries(m_level);
+    std::vector<size_t> indices;
+    for (size_t i = 0; i < all.size(); i++) {
+        if (!isSpeedrunMode() || all[i].branchId == SaveHistoryManager::SPEEDRUN_BRANCH) {
+            indices.push_back(i);
+        }
+    }
+    int const depth = static_cast<int>(Mod::get()->getSettingValue<int64_t>("rewind-depth"));
+    loadFromHistoryIndex(indices[indices.size() - static_cast<size_t>(depth) - 1]);
+}
+
+bool PSPlayLayer::rewindOneCheckpoint() {
+    rewindFromHistory();
+    return canRewind();
+}
+
+void PSPlayLayer::showPlayLevelMenu() {
+    PlayLevelMenuPopup::create(validSaveExists())->show();
+}
+
 // custom methods
 
 void PSPlayLayer::registerCheckpointsAndActivatedCheckpoints() {
@@ -279,11 +348,30 @@ void PSPlayLayer::setupKeybinds() {
     this->addEventListener(
         KeybindSettingPressedEventV3(Mod::get(), "save-game"),
         [this](Keybind const& keybind, bool down, bool repeat, double timestamp) {
-            if (down && !repeat && startSaveGame(true)) {
-                PSPauseLayer* l_pauseLayer = static_cast<PSPauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
-                if (l_pauseLayer) {
-                    l_pauseLayer->setSaveButtonEnabled(false);
+            if (down && !repeat && !isSpeedrunMode() && startSaveGame(true)) {
+                if (auto* pauseLayer = util::feedback::getOpenPauseLayer()) {
+                    pauseLayer->setSaveButtonEnabled(false);
                 }
+            }
+            return ListenerResult::Propagate;
+        }
+    );
+
+    this->addEventListener(
+        KeybindSettingPressedEventV3(Mod::get(), "load-game"),
+        [this](Keybind const& keybind, bool down, bool repeat, double timestamp) {
+            if (down && !repeat) {
+                util::feedback::openLoadMenu(this);
+            }
+            return ListenerResult::Propagate;
+        }
+    );
+
+    this->addEventListener(
+        KeybindSettingPressedEventV3(Mod::get(), "rewind-checkpoint"),
+        [this](Keybind const& keybind, bool down, bool repeat, double timestamp) {
+            if (down && !repeat) {
+                rewindOneCheckpoint();
             }
             return ListenerResult::Propagate;
         }
