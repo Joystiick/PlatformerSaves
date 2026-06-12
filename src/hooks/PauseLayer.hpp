@@ -33,4 +33,5 @@ public:
     void onSaveCheckpoints(cocos2d::CCObject* i_sender);
     void onLoadSave(cocos2d::CCObject* i_sender);
     void setSaveButtonEnabled(bool enabled);
+    void setLoadButtonEnabled(bool enabled);
 };

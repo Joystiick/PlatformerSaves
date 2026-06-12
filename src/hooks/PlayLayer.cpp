@@ -156,19 +156,39 @@ void PSPlayLayer::postUpdate(float i_unkFloat) {
 CheckpointObject* PSPlayLayer::markCheckpoint() {
     PSCheckpointObject* l_checkpointObject = static_cast<PSCheckpointObject*>(PlayLayer::markCheckpoint());
 
-    if (l_checkpointObject && savesEnabled() && m_fields->m_inPostUpdate && !m_isPracticeMode) {
-        if (m_fields->m_triedPlacingCheckpoint) {
-            m_fields->m_triedPlacingCheckpoint = false;
-        } else if (m_activatedCheckpoint != nullptr) {
-            //log::info("[markCheckpoint] triggered checkpoint");
-            l_checkpointObject->m_fields->m_timePlayed = m_timePlayed;
-            l_checkpointObject->m_fields->m_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-            m_fields->m_normalModeCheckpoints->addObject(l_checkpointObject);
-            m_fields->m_activatedCheckpoints.push_back(CheckpointGameObjectReference(m_activatedCheckpoint));
-            if (m_fields->m_savingState == SavingState::Ready) {
-                startSaveGame(false);
-            }
-        }
+    if (!l_checkpointObject || !savesEnabled() || !m_fields->m_inPostUpdate || m_isPracticeMode) {
+        return l_checkpointObject;
+    }
+
+    bool trackCheckpoint = false;
+    if (m_isPlatformer) {
+        // GD 2.2081 calls queueCheckpoint before markCheckpoint, so m_triedPlacingCheckpoint
+        // is always true here and the legacy guard would never record platformer checkpoints.
+        trackCheckpoint = true;
+    } else if (m_fields->m_triedPlacingCheckpoint) {
+        m_fields->m_triedPlacingCheckpoint = false;
+    } else if (m_activatedCheckpoint != nullptr) {
+        trackCheckpoint = true;
+    }
+
+    if (!trackCheckpoint) {
+        return l_checkpointObject;
+    }
+
+    if (m_fields->m_normalModeCheckpoints->count() > 0
+        && m_fields->m_normalModeCheckpoints->lastObject() == l_checkpointObject) {
+        return l_checkpointObject;
+    }
+
+    l_checkpointObject->m_fields->m_timePlayed = m_timePlayed;
+    l_checkpointObject->m_fields->m_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    m_fields->m_normalModeCheckpoints->addObject(l_checkpointObject);
+    if (m_activatedCheckpoint != nullptr) {
+        m_fields->m_activatedCheckpoints.push_back(CheckpointGameObjectReference(m_activatedCheckpoint));
+    }
+    if (m_fields->m_savingState == SavingState::Ready) {
+        startSaveGame(false);
     }
 
     return l_checkpointObject;
@@ -262,9 +282,7 @@ void PSPlayLayer::setupKeybinds() {
             if (down && !repeat && startSaveGame(true)) {
                 PSPauseLayer* l_pauseLayer = static_cast<PSPauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
                 if (l_pauseLayer) {
-                    if (l_pauseLayer->m_fields->m_saveCheckpointsSprite != nullptr) l_pauseLayer->m_fields->m_saveCheckpointsSprite->setColor({127,127,127});
-                    if (l_pauseLayer->m_fields->m_saveCheckpointsSprite != nullptr && l_pauseLayer->m_fields->m_saveCheckpointsSprite->getChildren()->count() > 0) static_cast<CCSprite*>(l_pauseLayer->m_fields->m_saveCheckpointsSprite->getChildren()->objectAtIndex(0))->setColor({127,127,127});
-                    if (l_pauseLayer->m_fields->m_saveCheckpointsButton != nullptr) l_pauseLayer->m_fields->m_saveCheckpointsButton->m_bEnabled = false;
+                    l_pauseLayer->setSaveButtonEnabled(false);
                 }
             }
             return ListenerResult::Propagate;

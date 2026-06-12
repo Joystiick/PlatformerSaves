@@ -7,6 +7,24 @@ using namespace geode::prelude;
 using namespace persistenceAPI;
 using namespace util::platform;
 
+namespace {
+    void setMenuSpriteEnabled(cocos2d::CCSprite* sprite, CCMenuItemSpriteExtra* button, bool enabled) {
+        if (!sprite || !button) {
+            return;
+        }
+        sprite->setColor(enabled ? ccc3(255, 255, 255) : ccc3(127, 127, 127));
+        button->m_bEnabled = enabled;
+    }
+}
+
+void PSPauseLayer::setSaveButtonEnabled(bool enabled) {
+    setMenuSpriteEnabled(m_fields->m_saveCheckpointsSprite, m_fields->m_saveCheckpointsButton, enabled);
+}
+
+void PSPauseLayer::setLoadButtonEnabled(bool enabled) {
+    setMenuSpriteEnabled(m_fields->m_loadSaveSprite, m_fields->m_loadSaveButton, enabled);
+}
+
 void PSPauseLayer::customSetup() {
     PauseLayer::customSetup();
 
@@ -20,10 +38,8 @@ void PSPauseLayer::customSetup() {
         return;
     }
 
-    m_fields->m_saveCheckpointsSprite = CircleButtonSprite::createWithSprite("saveButton.png"_spr, 1.5, CircleBaseColor::Green, CircleBaseSize::Medium);
-    m_fields->m_saveCheckpointsSprite->setScale(0.66);
-    CCSize l_contentSize = m_fields->m_saveCheckpointsSprite->getContentSize();
-    m_fields->m_saveCheckpointsSprite->setContentSize({l_contentSize.width, 49});
+    m_fields->m_saveCheckpointsSprite = CCSprite::create("saveButton.png"_spr);
+    m_fields->m_saveCheckpointsSprite->setScale(0.5f);
     m_fields->m_saveCheckpointsButton = CCMenuItemSpriteExtra::create(
         m_fields->m_saveCheckpointsSprite,
         this,
@@ -31,17 +47,8 @@ void PSPauseLayer::customSetup() {
     );
     m_fields->m_saveCheckpointsButton->setID("save-button"_spr);
 
-    if (!l_playLayer->canSave() && l_playLayer->m_fields->m_savingState == SavingState::Ready) {
-        m_fields->m_saveCheckpointsSprite->setColor({127,127,127});
-        if (m_fields->m_saveCheckpointsSprite->getChildren()->count() > 0) {
-            static_cast<CCSprite*>(m_fields->m_saveCheckpointsSprite->getChildren()->objectAtIndex(0))->setColor({127,127,127});
-        }
-        m_fields->m_saveCheckpointsButton->m_bEnabled = false;
-    }
-
-    m_fields->m_loadSaveSprite = CircleButtonSprite::createWithSprite("loadButton.png"_spr, 1.5, CircleBaseColor::Green, CircleBaseSize::Medium);
-    m_fields->m_loadSaveSprite->setScale(0.66);
-    m_fields->m_loadSaveSprite->setContentSize({l_contentSize.width, 49});
+    m_fields->m_loadSaveSprite = CCSprite::create("loadButton.png"_spr);
+    m_fields->m_loadSaveSprite->setScale(0.5f);
     m_fields->m_loadSaveButton = CCMenuItemSpriteExtra::create(
         m_fields->m_loadSaveSprite,
         this,
@@ -49,13 +56,8 @@ void PSPauseLayer::customSetup() {
     );
     m_fields->m_loadSaveButton->setID("load-save-button"_spr);
 
-    if (l_playLayer->m_fields->m_savingState != SavingState::Ready) {
-        m_fields->m_loadSaveSprite->setColor({127,127,127});
-        if (m_fields->m_loadSaveSprite->getChildren()->count() > 0) {
-            static_cast<CCSprite*>(m_fields->m_loadSaveSprite->getChildren()->objectAtIndex(0))->setColor({127,127,127});
-        }
-        m_fields->m_loadSaveButton->m_bEnabled = false;
-    }
+    setSaveButtonEnabled(l_playLayer->canSave() && l_playLayer->m_fields->m_savingState == SavingState::Ready);
+    setLoadButtonEnabled(l_playLayer->m_fields->m_savingState == SavingState::Ready);
 
     l_leftButtonMenu->addChild(m_fields->m_saveCheckpointsButton);
     l_leftButtonMenu->addChild(m_fields->m_loadSaveButton);
@@ -121,11 +123,7 @@ void PSPauseLayer::onSaveCheckpoints(CCObject* i_sender) {
     PSPlayLayer* l_playLayer = static_cast<PSPlayLayer*>(PlayLayer::get());
     if (l_playLayer && l_playLayer->m_fields->m_savingState == SavingState::Ready) {
         if (l_playLayer->startSaveGame(true)) {
-            m_fields->m_saveCheckpointsSprite->setColor({127,127,127});
-            if (m_fields->m_saveCheckpointsSprite->getChildren()->count() > 0) {
-                static_cast<CCSprite*>(m_fields->m_saveCheckpointsSprite->getChildren()->objectAtIndex(0))->setColor({127,127,127});
-            }
-            m_fields->m_saveCheckpointsButton->m_bEnabled = false;
+            setSaveButtonEnabled(false);
         }
     }
 }

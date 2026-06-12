@@ -9,7 +9,7 @@ Open GD → Geode → Download and enable:
 - **sabe.persistenceapi**
 - **geode.node-ids**
 
-Or install the release `.geode` from [GitHub Releases](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.2).
+Or install the release `.geode` from [GitHub Releases](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.3).
 
 ## 2. Build and install the mod
 

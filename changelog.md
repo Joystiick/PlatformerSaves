@@ -1,3 +1,8 @@
+## v1.0.3
+
+* Fix platformer checkpoints not registering on GD 2.2081 (save buttons stayed greyed out)
+* New save/load button sprites; use them directly instead of double-wrapping in CircleButtonSprite
+
 ## v1.0.2
 
 * Fix crash on level load (GD 2.2081): use `GameObject::resetMID()` instead of stale hardcoded memory offset
