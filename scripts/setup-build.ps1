@@ -83,7 +83,11 @@ $built = Get-ChildItem "$ProjectRoot\build" -Filter "*.geode" -ErrorAction Silen
 Pop-Location
 
 if ($built) {
+    $downloads = Join-Path $env:USERPROFILE "Downloads"
+    $dest = Join-Path $downloads $built.Name
+    Copy-Item $built.FullName $dest -Force
     Write-Host "[OK] Built: $($built.FullName)" -ForegroundColor Green
+    Write-Host "[OK] Copied to: $dest" -ForegroundColor Green
     Write-Host "Launch GD: geode profile run" -ForegroundColor Cyan
 } else {
     Write-Host "[!!] Build failed. Check output above." -ForegroundColor Red
