@@ -1,13 +1,15 @@
 # Platformer Saver
 
-Geode mod for Geometry Dash 2.2074 (Windows) — checkpoint save history for platformer levels.
+Geode mod for Geometry Dash 2.2081 (Windows) — checkpoint save history for platformer levels.
 
 Repository: https://github.com/Joystiick/PlatformerSaves
 
+**Download:** [v1.0.1 release](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.1)
+
 ## Requirements
 
-- [Geode](https://geode-sdk.org/) installed in GD 2.2074
-- Dependencies (install in-game): `sabe.persistenceapi`, `geode.node-ids`, `geode.custom-keybinds`
+- [Geode](https://geode-sdk.org/) 5.7.1+ installed in GD 2.2081
+- Dependencies (install in-game): `sabe.persistenceapi`, `geode.node-ids`
 
 ## Build
 

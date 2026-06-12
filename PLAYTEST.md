@@ -8,7 +8,8 @@ Open GD → Geode → Download and enable:
 
 - **sabe.persistenceapi**
 - **geode.node-ids**
-- **geode.custom-keybinds**
+
+Or install the release `.geode` from [GitHub Releases](https://github.com/Joystiick/PlatformerSaves/releases/tag/v1.0.1).
 
 ## 2. Build and install the mod
 

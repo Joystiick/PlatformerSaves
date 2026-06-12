@@ -19,7 +19,7 @@ foreach ($c in $checks) {
     Write-Host ("  [{0}] {1}" -f $mark, $c.Name) -ForegroundColor $color
 }
 
-$deps = @("sabe.persistenceapi", "geode.node-ids", "geode.custom-keybinds")
+$deps = @("sabe.persistenceapi", "geode.node-ids")
 Write-Host "`nDependencies in GD:" -ForegroundColor Cyan
 foreach ($d in $deps) {
     $found = Get-ChildItem "$gd\geode\mods\$d*.geode" -ErrorAction SilentlyContinue | Select-Object -First 1

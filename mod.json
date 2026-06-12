@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2081"
 	},
-	"version": "v1.0.0",
+	"version": "v1.0.1",
 	"id": "wuppy.platformer-saver",
 	"name": "Platformer Saver",
 	"developer": "wuppy",
@@ -28,14 +28,8 @@
 		"gameplay"
 	],
 	"dependencies": {
-		"geode.node-ids": {
-			"version": ">=v1.12.0-beta.4",
-			"importance": "required"
-		},
-		"sabe.persistenceapi": {
-			"version": "v1.1.0",
-			"importance": "required"
-		}
+		"geode.node-ids": ">=v1.12.0-beta.4",
+		"sabe.persistenceapi": "v1.1.0"
 	},
 	"settings": {
 		"show-save-notifications": {
@@ -83,11 +77,10 @@
 			"migrate-from": "wuppy.platformer-saver/save-game"
 		}
 	},
-	"incompatibilities": [
-		{
-			"id": "thesillydoggo.moretags",
-			"importance": "breaking",
+	"incompatibilities": {
+		"thesillydoggo.moretags": {
+			"breaking": true,
 			"version": "*"
 		}
-	]
+	}
 }

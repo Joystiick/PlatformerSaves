@@ -1,3 +1,7 @@
+## v1.0.1
+
+* Fix Geode 5 `mod.json` format: `incompatibilities` object and dependency version strings (mod failed to load on 5.7.1)
+
 ## v2.0.0
 
 * Rebranded to **Platformer Saver** (`wuppy.platformer-saver`)
