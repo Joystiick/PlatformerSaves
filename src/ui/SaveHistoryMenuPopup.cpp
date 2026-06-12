@@ -1,12 +1,11 @@
 #include "SaveHistoryMenuPopup.hpp"
 #include <hooks/PlayLayer.hpp>
-#include <hooks/PauseLayer.hpp>
 
 using namespace geode::prelude;
 
 SaveHistoryMenuPopup* SaveHistoryMenuPopup::create() {
     auto* ret = new SaveHistoryMenuPopup();
-    if (ret && ret->initAnchored(340.f, 280.f, "geode.loader/GE_square01.png")) {
+    if (ret && ret->init()) {
         ret->autorelease();
         return ret;
     }
@@ -14,7 +13,11 @@ SaveHistoryMenuPopup* SaveHistoryMenuPopup::create() {
     return nullptr;
 }
 
-bool SaveHistoryMenuPopup::setup() {
+bool SaveHistoryMenuPopup::init() {
+    if (!Popup::init(340.f, 280.f)) {
+        return false;
+    }
+
     setTitle("Load Save");
 
     auto* playLayer = static_cast<PSPlayLayer*>(PlayLayer::get());
@@ -111,9 +114,6 @@ void SaveHistoryMenuPopup::performLoad(size_t oldestFirstIndex) {
     auto doLoad = [=]() {
         if (playLayer->loadFromHistoryIndex(oldestFirstIndex)) {
             onClose(nullptr);
-            if (auto* pause = typeinfo_cast<PSPauseLayer*>(CCScene::get()->getChildByID("PauseLayer"))) {
-                pause->onResume(nullptr);
-            }
         }
     };
 
@@ -140,5 +140,5 @@ void SaveHistoryMenuPopup::performLoad(size_t oldestFirstIndex) {
 }
 
 void SaveHistoryMenuPopup::onClose(CCObject* sender) {
-    Popup::close();
+    Popup::onClose(sender);
 }

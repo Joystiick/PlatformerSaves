@@ -6,7 +6,6 @@
 #include <hooks/CheckpointObject.hpp>
 #include <sabe.persistenceapi/include/PersistenceAPI.hpp>
 #include <save/SaveHistoryManager.hpp>
-#include <save/SaveHistoryManager.hpp>
 #include <util/platform.hpp>
 
 class PSPlayLayer;
