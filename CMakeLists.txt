@@ -9,7 +9,7 @@ else()
 endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(PlatformerSaves VERSION 1.0.0)
+project(PlatformerSaver VERSION 2.0.0)
 
 # source files
 file(GLOB_RECURSE SOURCES
@@ -18,6 +18,7 @@ file(GLOB_RECURSE SOURCES
     src/hooks/cocos2d/*.cpp
     src/managers/*.cpp
     src/domain/*.cpp
+    src/save/*.cpp
     src/util/*.cpp
 	src/*.cpp
     ${OS_SOURCES}

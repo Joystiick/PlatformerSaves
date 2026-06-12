@@ -1,6 +1,7 @@
 #include "PlayLayer.hpp"
 #include <filesystem>
 #include <hooks/PauseLayer.hpp>
+#include <save/SaveHistoryManager.hpp>
 #include <util/algorithm.hpp>
 #include <util/filesystem.hpp>
 #include <util/platform.hpp>
@@ -9,9 +10,15 @@ using namespace geode::prelude;
 using namespace persistenceAPI;
 using namespace util::platform;
 
-bool PSPlayLayer::startSaveGame() {
+bool PSPlayLayer::startSaveGame(bool manual) {
     if (m_fields->m_savingState != SavingState::Ready || m_isPracticeMode) return false;
+    if (!manual && !canSave()) return false;
+
+    m_fields->m_manualSave = manual;
+    m_fields->m_pendingSaveReason = manual ? SaveReason::Manual : SaveReason::Checkpoint;
+    m_fields->m_saveSlot = SaveHistoryManager::get().getNextSlot(m_level);
     m_fields->m_savingState = SavingState::Setup;
+
     CCScene* l_currentScene = CCScene::get();
     if (l_currentScene) {
         l_currentScene->runAction(
@@ -50,11 +57,8 @@ void PSPlayLayer::writePSFHeader() {
 }
 
 void PSPlayLayer::saveGame() {
-    //log::info("SaveGame Gets run");
     switch (m_fields->m_savingState) {
         case SavingState::Setup: {
-            //log::info("Goes into beginning");
-
             if (m_fields->m_normalModeCheckpoints->count() == 0) {
                 m_fields->m_savingState = SavingState::Ready;
                 break;
@@ -90,7 +94,6 @@ void PSPlayLayer::saveGame() {
             if (m_fields->m_remainingCheckpointSaveCount > 0) {
                 saveCheckpointToStream(m_fields->m_normalModeCheckpoints->count()-m_fields->m_remainingCheckpointSaveCount);
                 m_fields->m_remainingCheckpointSaveCount--;
-                //log::info("Remaining save count: {}", m_fields->m_remainingCheckpointSaveCount);
                 CCScene* l_currentScene = CCScene::get();
                 if (l_currentScene) {
                     l_currentScene->runAction(
@@ -109,7 +112,6 @@ void PSPlayLayer::saveGame() {
             if (m_fields->m_remainingCheckpointSaveCount == 0) {
                 m_fields->m_savingState = SavingState::SaveActivatedCheckpoints;
             }
-            // TODO: use tasks maybe
             // falls through
         }
         case SavingState::SaveActivatedCheckpoints: {
@@ -139,10 +141,27 @@ void PSPlayLayer::saveGame() {
             bool o_finishedSaving = true;
             m_fields->m_stream.write((char*)&o_finishedSaving,sizeof(bool));
             endStream();
+
+            SaveHistoryManager::get().appendEntry(
+                m_level,
+                m_fields->m_saveSlot,
+                m_fields->m_pendingSaveReason,
+                static_cast<int>(m_fields->m_normalModeCheckpoints->count())
+            );
+
             showSavingProgressCircleSprite(false);
             showSavingSuccessSprite();
+
+            if (Mod::get()->getSettingValue<bool>("show-save-notifications")) {
+                auto const message = m_fields->m_pendingSaveReason == SaveReason::Manual
+                    ? "Game saved"
+                    : "Checkpoint saved";
+                Notification::create(message, NotificationIcon::Success, 1.5f)->show();
+            }
+
+            m_fields->m_manualSave = false;
+
             if (m_fields->m_exitAfterSave) {
-                //log::info("Goes into exitAfterSave");
                 m_fields->m_exitAfterSave = false;
                 PauseLayer* l_pauseLayer = static_cast<PauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
                 if (l_pauseLayer) {
@@ -155,10 +174,8 @@ void PSPlayLayer::saveGame() {
 }
 
 void PSPlayLayer::saveCheckpointToStream(unsigned int i_index) {
-    //log::info("Saving Startpoints to stream");
 #if defined(PS_DEBUG) && defined(PS_DESCRIBE)
     static_cast<PSCheckpointObject*>(m_fields->m_normalModeCheckpoints->objectAtIndex(i_index))->describe();
 #endif
     static_cast<PSCheckpointObject*>(m_fields->m_normalModeCheckpoints->objectAtIndex(i_index))->save(m_fields->m_stream);
-    //log::info("Saved Startpoints to stream");
 }

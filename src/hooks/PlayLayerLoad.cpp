@@ -1,5 +1,6 @@
 #include "PlayLayer.hpp"
 #include <filesystem>
+#include <save/SaveHistoryManager.hpp>
 #include <ui/PlayLevelMenuPopup.hpp>
 #include <util/algorithm.hpp>
 #include <util/filesystem.hpp>
@@ -76,19 +77,18 @@ void PSPlayLayer::loadGame() {
     switch (m_fields->m_loadingState) {
         case LoadingState::Setup: {
             m_fields->m_loadingProgress = 0.0f;
-            bool l_validSaveExists = validSaveExists();
 
-            if (!l_validSaveExists && Mod::get()->getSettingValue<bool>("disable-popup-on-new-game")) {
-                m_fields->m_saveSlot = 0;
-                m_fields->m_loadingState = LoadingState::Ready;
+            if (SaveHistoryManager::get().hasValidSave(m_level)) {
+                auto const latest = SaveHistoryManager::get().getLatest(m_level);
+                m_fields->m_saveSlot = latest->slot;
+                m_fields->m_showContinueNotification = true;
+                m_fields->m_loadingState = LoadingState::SetupFileRead;
                 break;
-            } else {
-                PlayLevelMenuPopup* l_playLevelMenuPopup = PlayLevelMenuPopup::create(l_validSaveExists);
-                l_playLevelMenuPopup->setID("play-level-menu-popup"_spr);
-                l_playLevelMenuPopup->show();
-                m_fields->m_loadingState = LoadingState::WaitingForPlayLevelMenuPopup;
             }
-            // falls through
+
+            m_fields->m_saveSlot = 0;
+            m_fields->m_loadingState = LoadingState::Ready;
+            break;
         }
         case LoadingState::WaitingForPlayLevelMenuPopup: {
             // TODO: fix this so it's not ugly
@@ -346,7 +346,7 @@ void PSPlayLayer::loadGame() {
             hideAndLockCursor(false);
             m_fields->m_loadingState = LoadingState::WaitingForPopup;
             createQuickPopup("Warning",
-                "This save file was updated from a previous version of PlatformerSaves, <cr>this might be unstable or crash the game</c>.",
+                "This save file was updated from a previous version of Platformer Saver, <cr>this might be unstable or crash the game</c>.",
                 "Ok",
                 "Don't show",
                 [&](FLAlertLayer*, bool i_btn2) {
@@ -491,4 +491,78 @@ void PSPlayLayer::endAsyncProcessCreateObjectsFromSetup() {
         CC_SAFE_RELEASE(m_fields->m_transitionFadeScene);
         m_fields->m_transitionFadeScene = nullptr;
     }
+}
+
+bool PSPlayLayer::loadSaveSlotSync(int slot) {
+    m_fields->m_saveSlot = slot;
+    m_fields->m_normalModeCheckpoints->removeAllObjects();
+    m_fields->m_activatedCheckpoints.clear();
+    removeAllCheckpoints();
+    endStream();
+
+    m_fields->m_loadingFromPause = true;
+    m_fields->m_loadingState = LoadingState::SetupFileRead;
+    m_fields->m_bytesToRead = 0;
+    m_fields->m_bytesRead = 0;
+    m_fields->m_loadingProgress = 0.0f;
+
+    for (int guard = 0; guard < 40; guard++) {
+        auto const prev = m_fields->m_loadingState;
+        loadGame();
+
+        if (m_fields->m_loadingState == LoadingState::Ready) {
+            break;
+        }
+        if (m_fields->m_loadingState == LoadingState::CancelLevelLoad ||
+            m_fields->m_loadingState == LoadingState::WaitingForPopup ||
+            m_fields->m_loadingState == LoadingState::WaitingForPlayLevelMenuPopup) {
+            m_fields->m_loadingFromPause = false;
+            return false;
+        }
+        if (prev == m_fields->m_loadingState &&
+            m_fields->m_loadingState != LoadingState::ReadCheckpoint) {
+            break;
+        }
+    }
+
+    m_fields->m_loadingFromPause = false;
+
+    if (m_fields->m_loadingState != LoadingState::Ready) {
+        return false;
+    }
+
+    if (m_fields->m_normalModeCheckpoints->count() > 0) {
+        auto* cp = static_cast<PSCheckpointObject*>(m_fields->m_normalModeCheckpoints->lastObject());
+        m_player1->setPosition(cp->m_fields->m_position);
+        m_player1->setStartPos(cp->m_fields->m_position);
+        m_fields->m_lastSavedCheckpointTimestamp = cp->m_fields->m_timestamp;
+    }
+
+    m_effectManager->m_persistentTimerItemSet = m_fields->m_loadedPersistentTimerItemSet;
+    m_attempts = m_fields->m_loadedAttempts;
+    resetLevel();
+    return true;
+}
+
+bool PSPlayLayer::loadFromHistoryIndex(size_t oldestFirstIndex) {
+    auto entries = SaveHistoryManager::get().getEntries(m_level);
+    if (oldestFirstIndex >= entries.size()) {
+        return false;
+    }
+
+    if (!SaveHistoryManager::get().truncateAfterIndex(m_level, oldestFirstIndex)) {
+        return false;
+    }
+
+    entries = SaveHistoryManager::get().getEntries(m_level);
+    if (entries.empty()) {
+        return false;
+    }
+
+    bool const ok = loadSaveSlotSync(entries.back().slot);
+
+    if (ok && Mod::get()->getSettingValue<bool>("show-save-notifications")) {
+        Notification::create("Save loaded", NotificationIcon::Success, 1.5f)->show();
+    }
+    return ok;
 }

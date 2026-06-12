@@ -8,12 +8,13 @@
 class $modify(PSPauseLayer, PauseLayer) {
 public:
     struct Fields {
-        cocos2d::CCSprite* m_saveCheckpointsSprite;
-        CCMenuItemSpriteExtra* m_saveCheckpointsButton;
-        bool m_cancelSave;
+        cocos2d::CCSprite* m_saveCheckpointsSprite = nullptr;
+        CCMenuItemSpriteExtra* m_saveCheckpointsButton = nullptr;
+        cocos2d::CCSprite* m_loadSaveSprite = nullptr;
+        CCMenuItemSpriteExtra* m_loadSaveButton = nullptr;
+        bool m_cancelSave = false;
     };
 
-    // overrides
     $override
     void customSetup();
 
@@ -29,7 +30,7 @@ public:
     $override
     void onQuit(cocos2d::CCObject* i_sender);
 
-    // custom methods
-
     void onSaveCheckpoints(cocos2d::CCObject* i_sender);
+    void onLoadSave(cocos2d::CCObject* i_sender);
+    void setSaveButtonEnabled(bool enabled);
 };

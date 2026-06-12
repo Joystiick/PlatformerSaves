@@ -1,21 +1,27 @@
 {
 	"geode": "4.9.0",
 	"gd": {
-		"win": "2.2074",
-		"android": "2.2074",
-		"mac": "2.2074",
-		"ios": "2.2074"
+		"win": "2.2074"
 	},
-	"version": "v1.1.2",
-	"id": "sabe.platformersaves",
-	"name": "PlatformerSaves",
-	"developer": "Sabe",
-	"description": "Save and load your progress in platformer levels!",
-	"repository": "https://github.com/0x5abe/PlatformerSaves",
+	"version": "v1.0.0",
+	"id": "wuppy.platformer-saver",
+	"name": "Platformer Saver",
+	"developer": "wuppy",
+	"description": "Unlimited checkpoint save history for platformer levels — auto-save on every checkpoint, pause-menu timeline, and auto-continue from your latest save.",
+	"repository": "https://github.com/TheWuppyCreator/Platformer-Saver",
 	"resources": {
 		"sprites": [
-			"resources/saveButton.png"
-		]
+			"resources/saveButton.png",
+			"resources/loadButton.png"
+		],
+		"fonts": {
+			"Pusab": {
+				"path": "resources/fonts/PUSAB.otf",
+				"size": 64,
+				"charset": "32-126,8226",
+				"outline": true
+			}
+		}
 	},
 	"tags": [
 		"enhancement",
@@ -25,10 +31,7 @@
 		"geode.custom-keybinds": {
 			"version": ">=v1.6.0",
 			"platforms": [
-				"win",
-				"android",
-				"mac-intel",
-                "mac-arm"
+				"win"
 			],
 			"importance": "required"
 		},
@@ -40,30 +43,30 @@
 			"version": "v1.1.0",
 			"importance": "required"
 		}
-    },
+	},
 	"settings": {
-		"auto-save": {
+		"show-save-notifications": {
 			"default": true,
-			"name": "Autosave",
-			"description": "Automatically saves the game when reaching a new checkpoint.",
+			"name": "Save notifications",
+			"description": "Show a notification when the game is saved (auto or manual).",
 			"type": "bool"
 		},
-		"editor-saves": {
-			"default": false,
-			"name": "Editor level saves",
-			"description": "Enables saving the game in editor levels (unstable). If the level gets edited after saving all progress must be reset.",
+		"show-continue-notification": {
+			"default": true,
+			"name": "Continue notification",
+			"description": "Show a notification when auto-continuing from your latest save.",
 			"type": "bool"
 		},
-		"remove-save-on-complete": {
-			"default": false,
-			"name": "Remove save on complete",
-			"description": "Removes the save file for a level once it is completed.",
+		"confirm-load-truncate": {
+			"default": true,
+			"name": "Confirm load truncate",
+			"description": "Ask for confirmation before deleting newer saves when loading an older save.",
 			"type": "bool"
 		},
-		"disable-popup-on-new-game": {
-			"default": false,
-			"name": "Disable popup on new game",
-			"description": "Automatically starts a new game without showing the popup if a save does not exist for that level.",
+		"save-history-sort": {
+			"default": true,
+			"name": "Newest saves first",
+			"description": "Show the newest saves at the top of the load history menu.",
 			"type": "bool"
 		},
 		"level-version-warning": {
@@ -75,7 +78,7 @@
 		"psf-version-warning": {
 			"default": true,
 			"name": "Updated save file warning",
-			"description": "Show a warning when opening a save file that was updated from a previous PlatformerSaves version.",
+			"description": "Show a warning when opening a save file that was updated from a previous Platformer Saver version.",
 			"type": "bool"
 		}
 	},

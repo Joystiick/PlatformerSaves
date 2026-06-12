@@ -5,6 +5,8 @@
 #include <domain/CheckpointGameObjectReference.hpp>
 #include <hooks/CheckpointObject.hpp>
 #include <sabe.persistenceapi/include/PersistenceAPI.hpp>
+#include <save/SaveHistoryManager.hpp>
+#include <save/SaveHistoryManager.hpp>
 #include <util/platform.hpp>
 
 class PSPlayLayer;
@@ -75,6 +77,8 @@ public:
         bool m_startedLoadingObjects = false;
         bool m_savingProgressCircleSpriteFadeIn = false;
         bool m_savingProgressCircleSpriteFadeOut = false;
+        bool m_showContinueNotification = false;
+        SaveReason m_pendingSaveReason = SaveReason::Checkpoint;
         uint8_t m_originalPSFVersion = 0;
         bool m_updatedFromPreviousLevelVersion = false;
         bool m_lowDetailMode = false;
@@ -100,6 +104,8 @@ public:
         geode::Ref<cocos2d::CCArray> m_normalModeCheckpoints = nullptr;
         std::vector<CheckpointGameObjectReference> m_activatedCheckpoints;
         gd::unordered_set<int> m_loadedPersistentTimerItemSet;
+        bool m_manualSave = false;
+        bool m_loadingFromPause = false;
     };
 
     // overrides
@@ -173,9 +179,13 @@ public:
 
     void writePSFHeader();
 
-    bool startSaveGame();
+    bool startSaveGame(bool manual = false);
 
     void saveGame();
+
+    bool loadSaveSlotSync(int slot);
+
+    bool loadFromHistoryIndex(size_t oldestFirstIndex);
 
     void saveCheckpointToStream(unsigned int i_index);
 

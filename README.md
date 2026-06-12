@@ -1,40 +1,38 @@
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H2ZNXL5)
+# Platformer Saver
 
-# PlatformerSaves
+Geode mod for Geometry Dash 2.2074 (Windows) — checkpoint save history for platformer levels.
 
-<img src="./logo.png" alt="PlatformerSaves logo" />
+## Requirements
 
-PlatformerSaves is a Geometry Dash mod for [Geode](https://geode-sdk.org/) that allows you to save and load your progress in platformer levels.
+- [Geode](https://geode-sdk.org/) installed in GD 2.2074
+- Dependencies (install in-game): `sabe.persistenceapi`, `geode.node-ids`, `geode.custom-keybinds`
 
-## Features
+## Build
 
-Pick up right where you left off and enjoy taking breaks without having to leave geometry dash open!
+1. Install [Geode CLI](https://docs.geode-sdk.org/getting-started/) and run `geode sdk install`
+2. Set `GEODE_SDK` environment variable (CLI does this automatically)
+3. Install Visual Studio 2022 with C++ desktop workload
+4. From this folder:
 
-- Support on all platforms
-- Checkpoint saving and loading for platformer levels
-- Auto save
+```powershell
+geode build
+```
 
-## Possible future features
+The `.geode` package appears in `build/` (or installs automatically if a CLI profile is configured).
 
-- Multiple save slots
-- Cloud saves
-- Better UI
+## Controls
 
-## Known bugs
+- **K** — quick manual save (in platformer levels)
+- **Pause → Save** — manual save (new history entry)
+- **Pause → Load** — open save timeline
 
-- Incompatibility with xdBot. The option "Always Practice Fixes" should be disabled for playing with the mod. And in general there might be issues if trying to record or play back macros with the mod installed. No guarantees
-- Music and sound effects can sometimes get bugged out
-- If player colors are used for objects they don't get updated if the player changes their colors
-- Practice Fix is not implemented (some player data is not saved, like vanilla)
+## Save data
 
-## Report a bug
+Stored under Geode's mod save directory per level:
 
-You can report a bug by [creating an issue](https://github.com/0x5abe/PlatformerSaves/issues), before creating one please make sure it isn't a duplicate (no one else reported it)
+- `history.json` — save timeline metadata
+- `slot{N}.psf` — full run snapshots
 
-## Credits
+## License
 
-- The Geode team for the amazing tool they've created and inspiring me to make GD mods
-- Nikki for help with bindings
-- Maromalo for testing and suggestions
-- Gtxripmxt for ios testing
-- Memtheturtle for mac testing
+See LICENSE (GPL from upstream PlatformerSaves). Pusab font: Flat-it freeware license in `resources/fonts/`.

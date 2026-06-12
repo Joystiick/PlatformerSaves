@@ -18,7 +18,7 @@ void setupKeybinds() {
     BindManager::get()->registerBindable({
         "save-game"_spr,
         "Save game",
-        "Hotkey for quick saving",
+        "Quick-save in platformer levels (Platformer Saver)",
         { Keybind::create(KEY_K, Modifier::None) },
         Category::PLAY,
     });

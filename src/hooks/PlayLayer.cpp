@@ -7,6 +7,8 @@
 #if !defined(GEODE_IS_IOS)
 #include <geode.custom-keybinds/include/Keybinds.hpp>
 #endif
+#include <save/SaveHistoryManager.hpp>
+#include <save/SaveHistoryManager.hpp>
 #include <util/algorithm.hpp>
 #include <util/filesystem.hpp>
 #include <util/platform.hpp>
@@ -93,23 +95,8 @@ void PSPlayLayer::setupHasCompleted() {
     if (!m_isPlatformer) {
         m_fields->m_loadingState = LoadingState::Ready;
     }
-    else if (!savesEnabled() && m_fields->m_loadingState != LoadingState::WaitingForPopup) {
-        if (!Mod::get()->getSavedValue<bool>("has-seen-editor-notice")) {
-            hideAndLockCursor(false);
-            m_fields->m_loadingState = LoadingState::WaitingForPopup;
-            createQuickPopup("Editor Level Saves",
-                "Saving the game is <cr>disabled</c> by default for editor levels since it can be <cr>unstable</c>. You can change this behavior in the PlatformerSaves <cy>mod settings</c> page.",
-                "Ok",
-                nullptr,
-                [&](FLAlertLayer*, bool i_btn2) {
-                    Mod::get()->setSavedValue<bool>("has-seen-editor-notice", true);
-                    m_fields->m_loadingState = LoadingState::Ready;
-                    hideAndLockCursor(true);
-                }
-            );
-        } else {
-            m_fields->m_loadingState = LoadingState::Ready;
-        }
+    else if (!savesEnabled()) {
+        m_fields->m_loadingState = LoadingState::Ready;
     }
     if (m_fields->m_loadingState != LoadingState::Ready) {
         //log::info("[setupHasCompleted] hasnt finished loading checkpoints");
@@ -142,6 +129,17 @@ void PSPlayLayer::setupHasCompleted() {
         if (m_fields->m_normalModeCheckpoints->count() > 0) {
             PSCheckpointObject* l_checkpoint = static_cast<PSCheckpointObject*>(m_fields->m_normalModeCheckpoints->lastObject());
             m_player1->setStartPos(l_checkpoint->m_fields->m_position);
+        }
+
+        if (m_fields->m_showContinueNotification) {
+            m_fields->m_showContinueNotification = false;
+            if (Mod::get()->getSettingValue<bool>("show-continue-notification")) {
+                auto const latest = SaveHistoryManager::get().getLatest(m_level);
+                auto const label = latest
+                    ? fmt::format("Continued from save #{}", latest->checkpointCount)
+                    : "Continued from latest save";
+                Notification::create(label, NotificationIcon::Info, 2.0f)->show();
+            }
         }
 
         m_fields->m_loadingProgress = 0.0f;
@@ -179,10 +177,8 @@ CheckpointObject* PSPlayLayer::markCheckpoint() {
             l_checkpointObject->m_fields->m_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
             m_fields->m_normalModeCheckpoints->addObject(l_checkpointObject);
             m_fields->m_activatedCheckpoints.push_back(CheckpointGameObjectReference(m_activatedCheckpoint));
-            // autosave
-            if (Mod::get()->getSettingValue<bool>("auto-save")) {
-                //log::info("[markCheckpoint] autosave triggered");
-                startSaveGame();
+            if (m_fields->m_savingState == SavingState::Ready) {
+                startSaveGame(false);
             }
         }
     }
@@ -267,14 +263,14 @@ std::string PSPlayLayer::getSaveFilePath(int i_slot, bool i_checkExists) {
 }
 
 bool PSPlayLayer::validSaveExists() {
-    return util::filesystem::validSaveExists(m_level);
+    return SaveHistoryManager::get().hasValidSave(m_level);
 }
 
 #if !defined(GEODE_IS_IOS)
 void PSPlayLayer::setupKeybinds() {
     addEventListener<keybinds::InvokeBindFilter>(
         [this](keybinds::InvokeBindEvent* event) {
-            if (event->isDown() && canSave() && startSaveGame()) {
+            if (event->isDown() && startSaveGame(true)) {
                 PSPauseLayer* l_pauseLayer = static_cast<PSPauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
                 if (l_pauseLayer) {
                     if (l_pauseLayer->m_fields->m_saveCheckpointsSprite != nullptr) l_pauseLayer->m_fields->m_saveCheckpointsSprite->setColor({127,127,127});
@@ -393,8 +389,7 @@ bool PSPlayLayer::canSave() {
 }
 
 bool PSPlayLayer::savesEnabled() {
-    //log::info("savesEnabled: {}", Mod::get()->getSettingValue<bool>("editor-saves") || m_level->m_levelType != GJLevelType::Editor);
-    return Mod::get()->getSettingValue<bool>("editor-saves") || ((m_level) && m_level->m_levelType != GJLevelType::Editor);
+    return m_level && m_level->m_levelType != GJLevelType::Editor;
 }
 
 void PSPlayLayer::removeSaveFile(int i_slot) {
